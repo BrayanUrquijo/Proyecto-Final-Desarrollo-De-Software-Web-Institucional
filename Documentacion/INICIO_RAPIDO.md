@@ -30,7 +30,7 @@ pip install -r requirements_web.txt
 ```
 
 ### 4. Configurar API Key de Gemini
-Crear el archivo `config_gemini.txt` en la raíz del proyecto y pegar tu API Key:
+Pegar tu api key en `.env` en la raíz del proyecto:
 ```
 TU_API_KEY_AQUI
 ```
