@@ -1,0 +1,17 @@
+# Secretos - NUNCA subir
+.env
+config_gemini.txt
+
+# Entorno virtual
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+
+# Scripts temporales
+fix_css*.py
