@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Consultas Academicas - IA</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <h1>Sistema de Consultas Academicas con IA</h1>
+        </div>
+        <div class="user-info">
+            <span id="userId">Usuario: Estudiante</span>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <h3>Panel de Control</h3>
+        <nav>
+            <ul>
+                <li><a href="#" class="active">Consultar IA</a></li>
+                <li><a href="#">Historial</a></li>
+                <li><a href="#">Configuracion</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <h2>Asistente Virtual Academico</h2>
+        <p class="subtitle">Haz preguntas sobre admisiones, calificaciones, horarios y mas</p>
+
+        <div class="options-grid">
+            <div class="option-card" onclick="setQuery('¿Como puedo consultar mis calificaciones?')">
+                <div class="icon">📊</div>
+                <h3>Consultar Calificaciones</h3>
+                <p>Pregunta sobre tus notas y rendimiento academico</p>
+            </div>
+
+            <div class="option-card" onclick="setQuery('¿Cual es el proceso de admision?')">
+                <div class="icon">📝</div>
+                <h3>Proceso de Admision</h3>
+                <p>Informacion sobre inscripciones y requisitos</p>
+            </div>
+
+            <div class="option-card" onclick="setQuery('¿Como solicito una certificacion?')">
+                <div class="icon">📄</div>
+                <h3>Solicitar Documentos</h3>
+                <p>Certificados, constancias y otros documentos</p>
+            </div>
+
+            <div class="option-card" onclick="setQuery('¿Donde encuentro mi horario de clases?')">
+                <div class="icon">📅</div>
+                <h3>Consultar Horarios</h3>
+                <p>Revisa tus horarios de clase y examenes</p>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot-message">
+                    <strong>Asistente IA:</strong> Hola! Soy tu asistente virtual. ¿En que puedo ayudarte hoy?
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    placeholder="Escribe tu pregunta aqui..."
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button onclick="sendMessage()">Enviar</button>
+            </div>
+
+            <div class="loading" id="loading" style="display: none;">
+                <span>Pensando...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Copyright © 2025 - Sistema Academico con IA | Desarrollado para estudiantes</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
