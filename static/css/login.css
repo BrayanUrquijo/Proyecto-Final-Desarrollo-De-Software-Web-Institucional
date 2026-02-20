@@ -1,0 +1,222 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 550px;
+}
+
+.login-box {
+    background: white;
+    border: 3px solid #8B4513;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 15px;
+}
+
+.logo-container {
+    margin-bottom: 10px;
+}
+
+.logo {
+    font-size: 48px;
+    display: inline-block;
+}
+
+.login-header h2 {
+    color: #2c3e50;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.info-box {
+    background: #fffacd;
+    border: 1px solid #daa520;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 25px;
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.univalle-logo {
+    flex-shrink: 0;
+}
+
+.logo-placeholder {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #DC143C 0%, #8B0000 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: bold;
+    border-radius: 5px;
+}
+
+.info-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #333;
+    text-align: justify;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #DC143C;
+}
+
+.error-message {
+    background: #fee;
+    border: 1px solid #fcc;
+    color: #c00;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.btn-primary,
+.btn-secondary {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #DC143C 0%, #8B0000 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 20, 60, 0.3);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.links {
+    text-align: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.links a {
+    color: #DC143C;
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.3s;
+}
+
+.links a:hover {
+    color: #8B0000;
+    text-decoration: underline;
+}
+
+.separator {
+    margin: 0 10px;
+    color: #999;
+}
+
+.help-link {
+    text-align: center;
+}
+
+.help-link a {
+    color: #DC143C;
+    text-decoration: none;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.3s;
+}
+
+.help-link a:hover {
+    color: #8B0000;
+}
+
+.help-icon {
+    width: 20px;
+    height: 20px;
+    background: #DC143C;
+    color: white;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+@media (max-width: 600px) {
+    .login-box { padding: 20px; }
+    .button-group { flex-direction: column; }
+    .info-box { flex-direction: column; text-align: center; }
+    .logo-placeholder { margin: 0 auto; }
+}

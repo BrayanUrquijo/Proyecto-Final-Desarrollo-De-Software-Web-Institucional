@@ -1,20 +1,17 @@
-// URL del backend (cambiar segun donde este corriendo)
-const API_URL = 'http://localhost:5000';
+// Dashboard - Chat con IA
 
-// Funcion para establecer una pregunta predefinida
+// Funciones del chat
 function setQuery(question) {
     document.getElementById('userInput').value = question;
     document.getElementById('userInput').focus();
 }
 
-// Funcion para manejar Enter en el input
 function handleKeyPress(event) {
     if (event.key === 'Enter') {
         sendMessage();
     }
 }
 
-// Funcion principal para enviar mensaje
 async function sendMessage() {
     const input = document.getElementById('userInput');
     const message = input.value.trim();
@@ -31,8 +28,7 @@ async function sendMessage() {
     showLoading(true);
     
     try {
-        // Llamar al backend
-        const response = await fetch(`${API_URL}/chat`, {
+        const response = await fetch('/api/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -57,7 +53,6 @@ async function sendMessage() {
     }
 }
 
-// Funcion para agregar mensaje al chat
 function addMessage(text, sender) {
     const messagesContainer = document.getElementById('chatMessages');
     const messageDiv = document.createElement('div');
@@ -71,26 +66,41 @@ function addMessage(text, sender) {
     }
     
     messagesContainer.appendChild(messageDiv);
-    
-    // Scroll automatico al final
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-// Funcion para mostrar/ocultar loading
 function showLoading(show) {
     const loading = document.getElementById('loading');
     loading.style.display = show ? 'block' : 'none';
 }
 
-// Verificar conexion con el backend al cargar la pagina
+// Funcion para cerrar sesion
+async function logout() {
+    if (confirm('¿Estas seguro de que quieres cerrar sesion?')) {
+        try {
+            await fetch('/api/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            window.location.href = '/login';
+        } catch (error) {
+            console.error('Error al cerrar sesion:', error);
+            window.location.href = '/login';
+        }
+    }
+}
+
+// Verificar conexion al cargar
 window.addEventListener('load', async () => {
     try {
-        const response = await fetch(`${API_URL}/health`);
+        const response = await fetch('/health');
         if (response.ok) {
             console.log('Conexion con backend exitosa');
         }
     } catch (error) {
-        console.warn('No se pudo conectar con el backend:', error);
-        addMessage('Advertencia: No hay conexion con el servidor. Asegurate de que el backend este corriendo.', 'bot');
+        console.warn('Error de conexion:', error);
     }
 });

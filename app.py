@@ -1,15 +1,17 @@
 """
 Backend Flask para Sistema Academico con IA
-Conecta el frontend con Google Gemini
+Ahora sirve las paginas HTML y maneja autenticacion
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from flask_cors import CORS
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+import os
 
-app = Flask(__name__)
-CORS(app)  # Permitir peticiones desde el frontend
+app = Flask(__name__, template_folder='templates', static_folder='static')
+app.secret_key = 'tu-clave-secreta-super-segura-cambiar-en-produccion'  # CAMBIAR en produccion
+CORS(app)
 
 # Cargar API key
 def cargar_api_key():
@@ -33,7 +35,7 @@ llm = ChatGoogleGenerativeAI(
     max_output_tokens=2048
 )
 
-# System prompt para el contexto academico
+# System prompt
 SYSTEM_PROMPT = """
 Eres un asistente virtual para un sistema academico universitario.
 Ayudas a estudiantes con:
@@ -48,26 +50,102 @@ Responde de forma amable, clara y profesional.
 Si no sabes algo, sugiere contactar con la oficina de registro academico.
 """
 
-# Historial de conversaciones (en produccion usar base de datos)
+# Usuarios validos (en produccion, usar base de datos)
+USUARIOS_VALIDOS = {
+    "2459407-3743": "admin123",
+    "estudiante": "pass123",
+    "demo": "demo"
+}
+
+# Historial de conversaciones
 conversaciones = {}
+
+# ============ RUTAS DE PAGINAS HTML ============
+
+@app.route('/')
+def index():
+    """Ruta principal - redirige al login"""
+    return redirect(url_for('login'))
+
+@app.route('/login')
+def login():
+    """Pagina de login"""
+    return render_template('login.html')
+
+@app.route('/dashboard')
+def dashboard():
+    """Pagina del dashboard - requiere autenticacion"""
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('dashboard.html', username=session['user'])
+
+# ============ RUTAS DE API ============
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    """Endpoint para autenticacion"""
+    try:
+        data = request.json
+        username = data.get('username', '')
+        password = data.get('password', '')
+        
+        # Verificar credenciales
+        if username in USUARIOS_VALIDOS and USUARIOS_VALIDOS[username] == password:
+            session['user'] = username
+            return jsonify({
+                "success": True,
+                "message": "Login exitoso",
+                "username": username
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Usuario o contrasena incorrectos"
+            }), 401
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+@app.route('/api/logout', methods=['POST'])
+def api_logout():
+    """Endpoint para cerrar sesion"""
+    session.pop('user', None)
+    return jsonify({"success": True, "message": "Sesion cerrada"})
+
+@app.route('/api/check-session', methods=['GET'])
+def check_session():
+    """Verificar si hay sesion activa"""
+    if 'user' in session:
+        return jsonify({
+            "logged_in": True,
+            "username": session['user']
+        })
+    return jsonify({"logged_in": False})
 
 @app.route('/health', methods=['GET'])
 def health():
-    """Endpoint para verificar que el servidor esta corriendo"""
+    """Verificar que el servidor esta corriendo"""
     return jsonify({"status": "ok", "message": "Backend funcionando correctamente"})
 
-@app.route('/chat', methods=['POST'])
+@app.route('/api/chat', methods=['POST'])
 def chat():
-    """Endpoint principal para el chat"""
+    """Endpoint para el chat con IA"""
     try:
+        # Verificar sesion
+        if 'user' not in session:
+            return jsonify({"error": "No autenticado"}), 401
+        
         data = request.json
         mensaje_usuario = data.get('message', '')
-        session_id = data.get('session_id', 'default')
+        session_id = session.get('user', 'default')
         
         if not mensaje_usuario:
             return jsonify({"error": "Mensaje vacio"}), 400
         
-        # Obtener historial de la sesion
+        # Obtener historial
         if session_id not in conversaciones:
             conversaciones[session_id] = []
         
@@ -86,7 +164,7 @@ def chat():
         historial.append(HumanMessage(content=mensaje_usuario))
         historial.append(AIMessage(content=texto_respuesta))
         
-        # Limitar historial a ultimas 10 interacciones
+        # Limitar historial
         if len(historial) > 20:
             historial = historial[-20:]
         
@@ -104,13 +182,14 @@ def chat():
             "details": str(e)
         }), 500
 
-@app.route('/clear', methods=['POST'])
-def clear_history():
-    """Endpoint para limpiar historial de conversacion"""
+@app.route('/api/clear-chat', methods=['POST'])
+def clear_chat():
+    """Limpiar historial de chat"""
     try:
-        data = request.json
-        session_id = data.get('session_id', 'default')
+        if 'user' not in session:
+            return jsonify({"error": "No autenticado"}), 401
         
+        session_id = session.get('user', 'default')
         if session_id in conversaciones:
             conversaciones[session_id] = []
         
@@ -121,6 +200,11 @@ def clear_history():
 if __name__ == '__main__':
     print("=" * 60)
     print("Servidor Flask iniciado")
-    print("Backend corriendo en: http://localhost:5000")
+    print("Accede a: http://localhost:5000")
+    print("=" * 60)
+    print("\nCredenciales de prueba:")
+    print("- Usuario: 2459407-3743 | Password: admin123")
+    print("- Usuario: estudiante | Password: pass123")
+    print("- Usuario: demo | Password: demo")
     print("=" * 60)
     app.run(debug=True, host='0.0.0.0', port=5000)
