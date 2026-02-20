@@ -1,41 +1,47 @@
 """
 Backend Flask para Sistema Academico con IA
-Ahora sirve las paginas HTML y maneja autenticacion
+Sirve las paginas HTML, maneja autenticacion y chat con Gemini
 """
 
+# ============ IMPORTS ============
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from flask_cors import CORS
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from dotenv import load_dotenv
 import os
 
+# ============ CONFIGURACION ============
+
+# Cargar variables de entorno desde .env
+load_dotenv()
+
 app = Flask(__name__, template_folder='templates', static_folder='static')
-app.secret_key = 'tu-clave-secreta-super-segura-cambiar-en-produccion'  # CAMBIAR en produccion
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'clave-por-defecto')
 CORS(app)
 
-# Cargar API key
-def cargar_api_key():
-    try:
-        with open('config_gemini.txt', 'r') as f:
-            return f.read().strip()
-    except FileNotFoundError:
-        print("ERROR: No se encontro config_gemini.txt")
-        return None
+# ============ API KEYS ============
 
-# Inicializar Gemini
-api_key = cargar_api_key()
-if not api_key:
-    print("ERROR: No se pudo cargar la API key")
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+
+if not GEMINI_API_KEY:
+    print("=" * 60)
+    print("ERROR: No se encontro GEMINI_API_KEY en el archivo .env")
+    print("Crea un archivo .env con: GEMINI_API_KEY=tu_api_key")
+    print("=" * 60)
     exit(1)
+
+# ============ INICIALIZAR GEMINI ============
 
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash",
-    google_api_key=api_key,
+    google_api_key=GEMINI_API_KEY,
     temperature=0.7,
     max_output_tokens=2048
 )
 
-# System prompt
+# ============ SYSTEM PROMPT ============
+
 SYSTEM_PROMPT = """
 Eres un asistente virtual para un sistema academico universitario.
 Ayudas a estudiantes con:
@@ -50,6 +56,8 @@ Responde de forma amable, clara y profesional.
 Si no sabes algo, sugiere contactar con la oficina de registro academico.
 """
 
+# ============ DATOS TEMPORALES (migrar a PostgreSQL en futuro) ============
+
 # Usuarios validos (en produccion, usar base de datos)
 USUARIOS_VALIDOS = {
     "2459407-3743": "admin123",
@@ -57,7 +65,7 @@ USUARIOS_VALIDOS = {
     "demo": "demo"
 }
 
-# Historial de conversaciones
+# Historial de conversaciones en memoria
 conversaciones = {}
 
 # ============ RUTAS DE PAGINAS HTML ============
@@ -79,7 +87,7 @@ def dashboard():
         return redirect(url_for('login'))
     return render_template('dashboard.html', username=session['user'])
 
-# ============ RUTAS DE API ============
+# ============ API - AUTENTICACION ============
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -89,7 +97,6 @@ def api_login():
         username = data.get('username', '')
         password = data.get('password', '')
         
-        # Verificar credenciales
         if username in USUARIOS_VALIDOS and USUARIOS_VALIDOS[username] == password:
             session['user'] = username
             return jsonify({
@@ -125,16 +132,12 @@ def check_session():
         })
     return jsonify({"logged_in": False})
 
-@app.route('/health', methods=['GET'])
-def health():
-    """Verificar que el servidor esta corriendo"""
-    return jsonify({"status": "ok", "message": "Backend funcionando correctamente"})
+# ============ API - CHAT CON IA ============
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """Endpoint para el chat con IA"""
     try:
-        # Verificar sesion
         if 'user' not in session:
             return jsonify({"error": "No autenticado"}), 401
         
@@ -164,7 +167,7 @@ def chat():
         historial.append(HumanMessage(content=mensaje_usuario))
         historial.append(AIMessage(content=texto_respuesta))
         
-        # Limitar historial
+        # Limitar historial a 20 mensajes
         if len(historial) > 20:
             historial = historial[-20:]
         
@@ -176,7 +179,7 @@ def chat():
         })
         
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error en chat: {e}")
         return jsonify({
             "error": "Error al procesar la solicitud",
             "details": str(e)
@@ -196,6 +199,15 @@ def clear_chat():
         return jsonify({"message": "Historial limpiado"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# ============ API - UTILIDADES ============
+
+@app.route('/health', methods=['GET'])
+def health():
+    """Verificar que el servidor esta corriendo"""
+    return jsonify({"status": "ok", "message": "Backend funcionando correctamente"})
+
+# ============ INICIAR SERVIDOR ============
 
 if __name__ == '__main__':
     print("=" * 60)
