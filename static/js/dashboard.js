@@ -56,15 +56,18 @@ async function sendMessage() {
 function addMessage(text, sender) {
     const messagesContainer = document.getElementById('chatMessages');
     const messageDiv = document.createElement('div');
-    
+
     messageDiv.className = `message ${sender === 'user' ? 'user-message' : 'bot-message'}`;
-    
-    if (sender === 'user') {
-        messageDiv.innerHTML = `<strong>Tu:</strong> ${text}`;
-    } else {
-        messageDiv.innerHTML = `<strong>Asistente IA:</strong> ${text}`;
-    }
-    
+
+    const label = document.createElement("strong");
+    label.textContent = sender === "user" ? "Tu: " : "Asistente IA: ";
+
+    const content = document.createElement("span");
+    content.textContent = text;
+
+    messageDiv.appendChild(label);
+    messageDiv.appendChild(content);
+
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }

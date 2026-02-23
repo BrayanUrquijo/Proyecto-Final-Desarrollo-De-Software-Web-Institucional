@@ -175,6 +175,7 @@ body {
     padding: 12px 15px;
     border-radius: 8px;
     max-width: 80%;
+    white-space: pre-wrap !important;
 }
 
 .user-message {
@@ -188,6 +189,7 @@ body {
     background: white;
     color: #2c3e50;
     border: 1px solid #e0e0e0;
+    white-space: pre-wrap
 }
 
 .chat-input-container {
