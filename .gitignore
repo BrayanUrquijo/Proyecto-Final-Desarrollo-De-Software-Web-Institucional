@@ -19,3 +19,4 @@ fix_css*.py
 # Bases de datos locles
 *.db
 *.sqlite3
+.env

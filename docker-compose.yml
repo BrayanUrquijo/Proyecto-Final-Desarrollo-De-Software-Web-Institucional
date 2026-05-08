@@ -4,11 +4,11 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: sistema_academico_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -17,23 +17,12 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./config_gemini.txt:/app/config_gemini.txt
       - ./app.py:/app/app.py
     environment:
       - FLASK_ENV=development
-      - DATABASE_URL=postgresql://postgres:password@db:5432/sistema_academico_db
+      - DATABASE_URL=${DATABASE_URL}
     depends_on:
       - db
-    restart: unless-stopped
-
-  frontend:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - ./index.html:/usr/share/nginx/html/index.html
-      - ./styles.css:/usr/share/nginx/html/styles.css
-      - ./script.js:/usr/share/nginx/html/script.js
     restart: unless-stopped
 
 volumes:
