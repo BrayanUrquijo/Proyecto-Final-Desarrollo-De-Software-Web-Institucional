@@ -17,7 +17,12 @@ import os
 # Cargar variables de entorno desde .env
 load_dotenv()
 
-app = Flask(__name__, template_folder='templates', static_folder='static')
+# Rutas absolutas para Vercel
+base_dir = os.path.dirname(os.path.abspath(__file__))
+static_folder = os.path.join(base_dir, 'static')
+template_folder = os.path.join(base_dir, 'templates')
+
+app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'clave-por-defecto')
 CORS(app)
 
