@@ -251,9 +251,28 @@ body {
         display: none;
     }
     
+    .header {
+        flex-direction: column;
+        padding: 15px;
+        gap: 15px;
+        text-align: center;
+        height: auto;
+    }
+
+    .header h1 {
+        font-size: 20px;
+    }
+
+    .user-info {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
     .main-content {
         margin-left: 0;
-        padding: 20px;
+        margin-top: 130px; /* Para acomodar el header más grande en móvil */
+        padding: 15px;
     }
     
     .footer {
@@ -262,5 +281,16 @@ body {
     
     .options-grid {
         grid-template-columns: 1fr;
+    }
+
+    /* Ajustar chat en móvil */
+    .chat-input-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .chat-input-container button {
+        margin-left: 0;
+        width: 100%;
     }
 }

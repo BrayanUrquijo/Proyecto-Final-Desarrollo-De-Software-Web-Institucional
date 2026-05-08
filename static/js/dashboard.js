@@ -60,10 +60,21 @@ function addMessage(text, sender) {
     messageDiv.className = `message ${sender === 'user' ? 'user-message' : 'bot-message'}`;
 
     const label = document.createElement("strong");
-    label.textContent = sender === "user" ? "Tu: " : "Asistente IA: ";
+    label.textContent = sender === "user" ? "Tu: " : "Asistente IA (Evelyn): ";
 
     const content = document.createElement("span");
-    content.textContent = text;
+    
+    if (sender === 'bot') {
+        // Parsear markdown basico: Negrilla (**texto**), Cursiva (*texto* o _texto_), y saltos de linea
+        let formattedText = text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/_(.*?)_/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>');
+        content.innerHTML = formattedText;
+    } else {
+        content.textContent = text;
+    }
 
     messageDiv.appendChild(label);
     messageDiv.appendChild(content);

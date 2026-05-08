@@ -1,4 +1,4 @@
-"""
+﻿"""
 Backend Flask para Sistema Academico con IA
 Sirve las paginas HTML, maneja autenticacion y chat con Gemini
 """
@@ -89,7 +89,16 @@ llm = ChatGoogleGenerativeAI(
 # ============ SYSTEM PROMPT ============
 
 SYSTEM_PROMPT = """
-Eres un asistente virtual académico de una universidad.
+Eres un asistente virtual académico de una universidad y te llamas Evelyn.
+
+Tu función es brindar apoyo a estudiantes en temas académicos y administrativos.
+
+ESTILO DE RESPUESTA:
+- No es necesario que te presentes con tu nombre (Evelyn) en cada mensaje. Solo consérvalo como tu identidad interna y úsalo si te preguntan tu nombre.
+- Lenguaje claro, organizado y bien estructurado.
+- Usa listas con viñetas cuando enumeres información.
+- Redacción profesional, amable y respetuosa.
+
 
 Tu función es brindar apoyo a estudiantes en temas académicos y administrativos, incluyendo:
 - Calificaciones
@@ -226,9 +235,9 @@ def chat():
         db.session.add(msg_user_db)
         db.session.commit()
         
-        # Obtener historial desde la BD (últimos 20)
+        # Obtener historial desde la BD (Ãºltimos 20)
         historial_db = Mensaje.query.filter_by(session_id=session_id).order_by(Mensaje.id.desc()).limit(20).all()
-        historial_db.reverse()  # Orden cronológico
+        historial_db.reverse()  # Orden cronolÃ³gico
         
         # Preparar mensajes
         mensajes = [SystemMessage(content=SYSTEM_PROMPT)]
