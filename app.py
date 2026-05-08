@@ -4,7 +4,7 @@ Sirve las paginas HTML, maneja autenticacion y chat con Gemini
 """
 
 # ============ IMPORTS ============
-from flask import Flask, request, jsonify, render_template, session, redirect, url_for
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for, stream_with_context, Response
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -249,19 +249,21 @@ def chat():
             elif msg.role == 'ai':
                 mensajes.append(AIMessage(content=msg.content))
         
-        # Obtener respuesta de Gemini
-        respuesta = llm.invoke(mensajes)
-        texto_respuesta = respuesta.content
+        # Generator for streaming chunks
+        def generate():
+            texto_completo = ""
+            for chunk in llm.stream(mensajes):
+                if chunk.content:
+                    texto_completo += chunk.content
+                    yield chunk.content
+            
+            # Al terminar el stream, guardamos en BD
+            with app.app_context():
+                msg_ai_db = Mensaje(session_id=session_id, role='ai', content=texto_completo)
+                db.session.add(msg_ai_db)
+                db.session.commit()
 
-        # Guardar respuesta de IA en BD
-        msg_ai_db = Mensaje(session_id=session_id, role='ai', content=texto_respuesta)
-        db.session.add(msg_ai_db)
-        db.session.commit()
-        
-        return jsonify({
-            "response": texto_respuesta,
-            "session_id": session_id
-        })
+        return Response(stream_with_context(generate()), mimetype='text/plain')
         
     except Exception as e:
         print(f"Error en chat: {e}")

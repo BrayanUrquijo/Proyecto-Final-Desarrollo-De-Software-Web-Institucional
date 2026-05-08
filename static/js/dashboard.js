@@ -40,16 +40,48 @@ async function sendMessage() {
             throw new Error('Error en la respuesta del servidor');
         }
         
-        const data = await response.json();
+        showLoading(false); // Ocultarlo ya que empieza el streaming
         
-        // Mostrar respuesta del bot
-        addMessage(data.response, 'bot');
+        // Preparar para recibir stream
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let botText = '';
+        
+        // Crear elemento del mensaje del bot
+        const messagesContainer = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message bot-message';
+        const label = document.createElement('strong');
+        label.textContent = 'Asistente IA (Evelyn): ';
+        const content = document.createElement('span');
+        
+        messageDiv.appendChild(label);
+        messageDiv.appendChild(content);
+        messagesContainer.appendChild(messageDiv);
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            botText += decoder.decode(value, { stream: true });
+            
+            // Reemplazos de formato Markdown al vuelo
+            let formattedText = botText
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/_(.*?)_/g, '<em>$1</em>')
+                .replace(/(?:^|\n)\*\s/g, '<br>• ') // Reemplaza asteriscos de lista
+                .replace(/(?:^|\n)-\s/g, '<br>• ')  // Reemplaza guiones de lista
+                .replace(/\n/g, '<br>');
+                
+            content.innerHTML = formattedText;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
         
     } catch (error) {
         console.error('Error:', error);
-        addMessage('Lo siento, hubo un error al procesar tu pregunta. Intenta de nuevo.', 'bot');
-    } finally {
         showLoading(false);
+        addMessage('Lo siento, hubo un error al procesar tu pregunta. Intenta de nuevo.', 'bot');
     }
 }
 
