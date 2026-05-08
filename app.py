@@ -6,6 +6,7 @@ Sirve las paginas HTML, maneja autenticacion y chat con Gemini
 # ============ IMPORTS ============
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from dotenv import load_dotenv
@@ -19,6 +20,46 @@ load_dotenv()
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'clave-por-defecto')
 CORS(app)
+
+# ============ CONFIGURACION DB ============
+
+database_url = os.getenv('DATABASE_URL', 'postgresql://postgres:password@localhost:5432/sistema_academico_db')
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+# ============ MODELOS DE BASE DE DATOS ============
+
+class Usuario(db.Model):
+    __tablename__ = 'usuarios'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+class Mensaje(db.Model):
+    __tablename__ = 'mensajes'
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.String(50), db.ForeignKey('usuarios.username'), nullable=False)
+    role = db.Column(db.String(20), nullable=False) # 'user' o 'ai'
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+with app.app_context():
+    db.create_all()
+    # Insertar usuarios por defecto si no existen
+    if not Usuario.query.first():
+        usuarios_default = [
+            Usuario(username="2459407-3743", password_hash="admin123"),
+            Usuario(username="estudiante", password_hash="pass123"),
+            Usuario(username="demo", password_hash="demo")
+        ]
+        db.session.bulk_save_objects(usuarios_default)
+        db.session.commit()
 
 # ============ API KEYS ============
 
@@ -93,19 +134,6 @@ OBJETIVO PRINCIPAL
 Ayudar al estudiante de la forma más clara, útil y profesional posible, priorizando siempre su bienestar y orientación correcta dentro de la universidad.
 """
 
-
-# ============ DATOS TEMPORALES (migrar a PostgreSQL en futuro) ============
-
-# Usuarios validos (en produccion, usar base de datos)
-USUARIOS_VALIDOS = {
-    "2459407-3743": "admin123",
-    "estudiante": "pass123",
-    "demo": "demo"
-}
-
-# Historial de conversaciones en memoria
-conversaciones = {}
-
 # ============ RUTAS DE PAGINAS HTML ============
 
 @app.route('/')
@@ -135,7 +163,9 @@ def api_login():
         username = data.get('username', '')
         password = data.get('password', '')
         
-        if username in USUARIOS_VALIDOS and USUARIOS_VALIDOS[username] == password:
+        usuario = Usuario.query.filter_by(username=username).first()
+        
+        if usuario and usuario.password_hash == password:
             session['user'] = username
             return jsonify({
                 "success": True,
@@ -186,30 +216,32 @@ def chat():
         if not mensaje_usuario:
             return jsonify({"error": "Mensaje vacio"}), 400
         
-        # Obtener historial
-        if session_id not in conversaciones:
-            conversaciones[session_id] = []
+        # Guardar mensaje del usuario en BD
+        msg_user_db = Mensaje(session_id=session_id, role='user', content=mensaje_usuario)
+        db.session.add(msg_user_db)
+        db.session.commit()
         
-        historial = conversaciones[session_id]
+        # Obtener historial desde la BD (últimos 20)
+        historial_db = Mensaje.query.filter_by(session_id=session_id).order_by(Mensaje.id.desc()).limit(20).all()
+        historial_db.reverse()  # Orden cronológico
         
         # Preparar mensajes
         mensajes = [SystemMessage(content=SYSTEM_PROMPT)]
-        mensajes.extend(historial)
-        mensajes.append(HumanMessage(content=mensaje_usuario))
+        
+        for msg in historial_db:
+            if msg.role == 'user':
+                mensajes.append(HumanMessage(content=msg.content))
+            elif msg.role == 'ai':
+                mensajes.append(AIMessage(content=msg.content))
         
         # Obtener respuesta de Gemini
         respuesta = llm.invoke(mensajes)
         texto_respuesta = respuesta.content
 
-        # Guardar en historial
-        historial.append(HumanMessage(content=mensaje_usuario))
-        historial.append(AIMessage(content=texto_respuesta))
-        
-        # Limitar historial a 20 mensajes
-        if len(historial) > 20:
-            historial = historial[-20:]
-        
-        conversaciones[session_id] = historial
+        # Guardar respuesta de IA en BD
+        msg_ai_db = Mensaje(session_id=session_id, role='ai', content=texto_respuesta)
+        db.session.add(msg_ai_db)
+        db.session.commit()
         
         return jsonify({
             "response": texto_respuesta,
@@ -231,8 +263,9 @@ def clear_chat():
             return jsonify({"error": "No autenticado"}), 401
         
         session_id = session.get('user', 'default')
-        if session_id in conversaciones:
-            conversaciones[session_id] = []
+        
+        Mensaje.query.filter_by(session_id=session_id).delete()
+        db.session.commit()
         
         return jsonify({"message": "Historial limpiado"})
     except Exception as e:

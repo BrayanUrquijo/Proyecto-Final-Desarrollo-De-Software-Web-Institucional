@@ -5,10 +5,10 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Copiar archivos de dependencias
-COPY requirements_web.txt .
+COPY requirements.txt .
 
 # Instalar dependencias
-RUN pip install --no-cache-dir -r requirements_web.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar todos los archivos del proyecto
 COPY . .
