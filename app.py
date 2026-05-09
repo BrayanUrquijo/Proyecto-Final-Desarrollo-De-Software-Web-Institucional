@@ -254,29 +254,16 @@ def chat():
         # Generator for streaming chunks
         def generate():
             texto_completo = ""
-            used_fallback = False
             try:
-                # Intentamos con el modelo primario (gemini-2.5-flash)
                 for chunk in llm.stream(mensajes):
                     if chunk.content:
                         texto_completo += chunk.content
                         yield chunk.content
-            except Exception as e_primary:
-                print(f"Error streaming primary model: {e_primary}")
-                # Intentar fallback silencioso con el modelo estable
-                try:
-                    used_fallback = True
-                    fallback_notice = "\n[Nota: Fallo modelo primario, usando modelo alternativo...]\n"
-                    yield fallback_notice
-                    for chunk in llm_fallback.stream(mensajes):
-                        if chunk.content:
-                            texto_completo += chunk.content
-                            yield chunk.content
-                except Exception as e_fallback:
-                    print(f"Error streaming fallback model: {e_fallback}")
-                    err_msg = "Lo siento, ocurrió un error procesando tu solicitud."
-                    texto_completo += "\n" + err_msg
-                    yield err_msg
+            except Exception as e:
+                print(f"Error streaming model: {e}")
+                err_msg = "Lo siento, ocurrió un error procesando tu solicitud."
+                texto_completo += "\n" + err_msg
+                yield err_msg
             finally:
                 # Guardar en BD (siempre que tengamos contenido)
                 try:
