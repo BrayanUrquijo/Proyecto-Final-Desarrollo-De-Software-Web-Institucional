@@ -79,12 +79,14 @@ if not GEMINI_API_KEY:
 
 # ============ INICIALIZAR GEMINI ============
 
+# Modelo primario (segun preferencia del usuario)
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
+    model="gemini-2.5-flash",
     google_api_key=GEMINI_API_KEY,
     temperature=0.7,
     max_output_tokens=2048
 )
+
 
 # ============ SYSTEM PROMPT ============
 
@@ -252,26 +254,38 @@ def chat():
         # Generator for streaming chunks
         def generate():
             texto_completo = ""
+            used_fallback = False
             try:
+                # Intentamos con el modelo primario (gemini-2.5-flash)
                 for chunk in llm.stream(mensajes):
                     if chunk.content:
                         texto_completo += chunk.content
                         yield chunk.content
-                
-                # Al terminar el stream, guardamos en BD
-                with app.app_context():
-                    msg_ai_db = Mensaje(session_id=session_id, role='ai', content=texto_completo)
-                    db.session.add(msg_ai_db)
-                    db.session.commit()
-            except Exception as e:
-                print(f"Error generador: {e}")
-                err_msg = f"Lo siento, ocurrió un error procesando tu solicitud."
-                texto_completo += "\n" + err_msg
-                yield err_msg
-                with app.app_context():
-                    msg_ai_db = Mensaje(session_id=session_id, role='ai', content=texto_completo)
-                    db.session.add(msg_ai_db)
-                    db.session.commit()
+            except Exception as e_primary:
+                print(f"Error streaming primary model: {e_primary}")
+                # Intentar fallback silencioso con el modelo estable
+                try:
+                    used_fallback = True
+                    fallback_notice = "\n[Nota: Fallo modelo primario, usando modelo alternativo...]\n"
+                    yield fallback_notice
+                    for chunk in llm_fallback.stream(mensajes):
+                        if chunk.content:
+                            texto_completo += chunk.content
+                            yield chunk.content
+                except Exception as e_fallback:
+                    print(f"Error streaming fallback model: {e_fallback}")
+                    err_msg = "Lo siento, ocurrió un error procesando tu solicitud."
+                    texto_completo += "\n" + err_msg
+                    yield err_msg
+            finally:
+                # Guardar en BD (siempre que tengamos contenido)
+                try:
+                    with app.app_context():
+                        msg_ai_db = Mensaje(session_id=session_id, role='ai', content=texto_completo)
+                        db.session.add(msg_ai_db)
+                        db.session.commit()
+                except Exception as e_db:
+                    print(f"Error guardando mensaje en BD: {e_db}")
 
         return Response(stream_with_context(generate()), mimetype='text/plain')
         
