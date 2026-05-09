@@ -80,7 +80,7 @@ if not GEMINI_API_KEY:
 # ============ INICIALIZAR GEMINI ============
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
+    model="gemini-1.5-flash",
     google_api_key=GEMINI_API_KEY,
     temperature=0.7,
     max_output_tokens=2048
@@ -252,16 +252,26 @@ def chat():
         # Generator for streaming chunks
         def generate():
             texto_completo = ""
-            for chunk in llm.stream(mensajes):
-                if chunk.content:
-                    texto_completo += chunk.content
-                    yield chunk.content
-            
-            # Al terminar el stream, guardamos en BD
-            with app.app_context():
-                msg_ai_db = Mensaje(session_id=session_id, role='ai', content=texto_completo)
-                db.session.add(msg_ai_db)
-                db.session.commit()
+            try:
+                for chunk in llm.stream(mensajes):
+                    if chunk.content:
+                        texto_completo += chunk.content
+                        yield chunk.content
+                
+                # Al terminar el stream, guardamos en BD
+                with app.app_context():
+                    msg_ai_db = Mensaje(session_id=session_id, role='ai', content=texto_completo)
+                    db.session.add(msg_ai_db)
+                    db.session.commit()
+            except Exception as e:
+                print(f"Error generador: {e}")
+                err_msg = f"Lo siento, ocurrió un error procesando tu solicitud."
+                texto_completo += "\n" + err_msg
+                yield err_msg
+                with app.app_context():
+                    msg_ai_db = Mensaje(session_id=session_id, role='ai', content=texto_completo)
+                    db.session.add(msg_ai_db)
+                    db.session.commit()
 
         return Response(stream_with_context(generate()), mimetype='text/plain')
         

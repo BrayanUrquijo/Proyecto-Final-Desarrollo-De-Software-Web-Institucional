@@ -92,7 +92,7 @@ function addMessage(text, sender) {
     messageDiv.className = `message ${sender === 'user' ? 'user-message' : 'bot-message'}`;
 
     const label = document.createElement("strong");
-    label.textContent = sender === "user" ? "Tu: " : "Asistente IA (Evelyn): ";
+    label.textContent = sender === "user" ? "Tu: " : "Asistente IA: ";
 
     const content = document.createElement("span");
     
