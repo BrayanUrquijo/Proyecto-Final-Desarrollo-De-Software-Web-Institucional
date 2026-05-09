@@ -15,8 +15,8 @@ __pycache__/
 
 # Scripts temporales
 fix_css*.py
+init_neon_db.py
 
 # Bases de datos locles
 *.db
 *.sqlite3
-.env
