@@ -52,7 +52,7 @@ async function sendMessage() {
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message bot-message';
         const label = document.createElement('strong');
-        label.textContent = 'Asistente IA (Evelyn): ';
+        label.textContent = 'Asistente IA: ';
         const content = document.createElement('span');
         
         messageDiv.appendChild(label);
